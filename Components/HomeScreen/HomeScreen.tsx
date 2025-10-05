@@ -5,14 +5,16 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
+  StyleSheet,
   ScrollView,
   Dimensions,
   StatusBar,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../Navigation';
+import { useNavigation } from '@react-navigation/native';
 import { styles } from './HomescreenStyle';
 
 const { width } = Dimensions.get('window');
@@ -53,7 +55,9 @@ export default function HomeScreen() {
     setToLang(temp);
   };
 
-  const getLanguageLabel = (code: string) => LANGUAGES.find(l => l.code === code)?.label || code;
+  const getLanguageLabel = (code: string) => {
+    return LANGUAGES.find(l => l.code === code)?.label || code;
+  };
 
   return (
     <>
@@ -70,7 +74,11 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Text Input */}
           <View style={styles.inputContainer}>
             <TextInput
@@ -111,6 +119,7 @@ export default function HomeScreen() {
 
           {/* Action Buttons */}
           <View style={styles.actionRow}>
+            {/* Conversation Button */}
             <TouchableOpacity style={styles.actionButton}>
               <View style={styles.iconCircle}>
                 <Text style={styles.actionIcon}>👥</Text>
@@ -118,11 +127,20 @@ export default function HomeScreen() {
               <Text style={styles.actionLabel}>Conversation</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.mainActionButton} onPress={onConvert} disabled={loading || !sourceText.trim()}>
+            {/* Microphone Button */}
+            <TouchableOpacity
+              style={styles.mainActionButton}
+              onPress={onConvert}
+              disabled={loading || !sourceText.trim()}
+            >
               {loading ? <ActivityIndicator color="#fff" size="large" /> : <Text style={styles.micIcon}>🎤</Text>}
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('Camera')}>
+            {/* Camera Button */}
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => navigation.navigate('Camera')}
+            >
               <View style={styles.iconCircle}>
                 <Text style={styles.actionIcon}>📷</Text>
               </View>

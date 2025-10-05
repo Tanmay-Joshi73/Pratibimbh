@@ -1,22 +1,27 @@
 import React from 'react';
-import { View, Text, StyleSheet, StatusBar, useColorScheme } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar, useColorScheme } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from './Components/HomeScreen/HomeScreen';
-import AppNavigation from './Navigation';
+import CameraScreen from './Components/CameraScreen/CameraScreen';
+
+export type RootStackParamList = {
+  Home: undefined;
+  Camera: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
 export default function App() {
   const isDarkMode = useColorScheme() === 'dark';
-  return <AppNavigation />;
-}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-});
+  return (
+    <NavigationContainer>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Camera" component={CameraScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
