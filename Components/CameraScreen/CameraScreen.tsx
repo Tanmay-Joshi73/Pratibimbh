@@ -1,82 +1,157 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import ImagePicker from 'react-native-image-crop-picker';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../Navigation';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { Camera, useCameraDevice } from 'react-native-vision-camera';
 
-type CameraScreenNavigationProp = NativeStackNavigationProp<
-  RootStackParamList,
-  'Camera'
->;
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-type Props = {
-  navigation: CameraScreenNavigationProp;
-};
+const CameraWithOverlay = () => {
+  const camera = useRef<Camera>(null);
+  const device = useCameraDevice('back');
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
-export default function CameraScreen({ navigation }: Props) {
-  const [image, setImage] = useState<string | null>(null);
+  useEffect(() => {
+    const requestPermissions = async () => {
+      try {
+        const cameraPermission = await Camera.requestCameraPermission();
+        setHasPermission( cameraPermission === 'granted');
+      } catch (error) {
+        console.error('Permission error:', error);
+        setHasPermission(false);
+      }
+    };
 
-  const openCamera = () => {
-    ImagePicker.openCamera({
-      width: 300,
-      height: 400,
-      cropping: true,
-    })
-      .then((img) => {
-        console.log(img);
-        setImage(img.path);
-      })
-      .catch((e) => console.log(e));
-  };
+    requestPermissions();
+  }, []);
 
-  const openGallery = () => {
-    ImagePicker.openPicker({
-      width: 300,
-      height: 400,
-      cropping: true,
-    })
-      .then((img) => {
-        console.log(img);
-        setImage(img.path);
-      })
-      .catch((e) => console.log(e));
-  };
+  if (hasPermission === null) return <View style={styles.center}><Text>Checking permissions...</Text></View>;
+  if (hasPermission === false) return <View style={styles.center}><Text>No camera permission</Text></View>;
+  if (!device) return <View style={styles.center}><Text>No camera device</Text></View>;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Camera Screen</Text>
+      <Camera
+        ref={camera}
+        style={StyleSheet.absoluteFill}
+        device={device}
+        isActive={true}
+        photo={true}
+      />
+      
+      {/* Camera Overlay */}
+      <View style={styles.overlay}>
+        {/* Top Instruction */}
+        <View style={styles.instructionContainer}>
+          <Text style={styles.instructionText}>
+            Point camera at text
+          </Text>
+        </View>
 
-      {image && <Image source={{ uri: image }} style={styles.image} />}
+        {/* Scanning Area */}
+        <View style={styles.scanArea}>
+          <View style={styles.cornerTopLeft} />
+          <View style={styles.cornerTopRight} />
+          <View style={styles.cornerBottomLeft} />
+          <View style={styles.cornerBottomRight} />
+        </View>
 
-      <TouchableOpacity style={styles.button} onPress={openCamera}>
-        <Text style={styles.buttonText}>Take Photo</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={openGallery}>
-        <Text style={styles.buttonText}>Select From Gallery</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#555' }]}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.buttonText}>Back</Text>
-      </TouchableOpacity>
+        {/* Bottom Hint */}
+        <View style={styles.hintContainer}>
+          <Text style={styles.hintText}>
+            Ensure text is within the frame
+          </Text>
+        </View>
+      </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 },
-  title: { fontSize: 24, marginBottom: 20 },
-  button: {
-    padding: 16,
-    backgroundColor: '#1a73e8',
-    borderRadius: 8,
-    marginVertical: 8,
-    width: '80%',
+  container: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '500' },
-  image: { width: 300, height: 400, marginVertical: 16, borderRadius: 8 },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  instructionContainer: {
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  instructionText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  scanArea: {
+    width: screenWidth * 0.8,
+    height: screenHeight * 0.3,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    position: 'relative',
+  },
+  cornerTopLeft: {
+    position: 'absolute',
+    top: -2,
+    left: -2,
+    width: 30,
+    height: 30,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: '#00FF00',
+  },
+  cornerTopRight: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 30,
+    height: 30,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderColor: '#00FF00',
+  },
+  cornerBottomLeft: {
+    position: 'absolute',
+    bottom: -2,
+    left: -2,
+    width: 30,
+    height: 30,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderColor: '#00FF00',
+  },
+  cornerBottomRight: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 30,
+    height: 30,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderColor: '#00FF00',
+  },
+  hintContainer: {
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  hintText: {
+    color: 'white',
+    fontSize: 14,
+    textAlign: 'center',
+  },
 });
+
+export default CameraWithOverlay;
